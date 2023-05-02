@@ -1,0 +1,37 @@
+{
+  "name": "evmlightning-sdk",
+  "version": "1.0.0",
+  "description": "SDK for cross-chain swaps between EVM chains and bitcoin",
+  "main": "./dist/index.js",
+  "types:": "./dist/index.d.ts",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "files": [
+    "/dist",
+    "/src"
+  ],
+  "keywords": [
+    "EVM",
+    "Bitcoin",
+    "Cross-chain",
+    "Cryptocurrency",
+    "Bridge",
+    "Trustless"
+  ],
+  "author": "adambor",
+  "license": "ISC",
+  "dependencies": {
+    "bitcoinjs-lib": "^6.1.0",
+    "bolt11": "^1.4.0",
+    "buffer": "^6.0.3",
+    "cross-fetch": "^3.1.5",
+    "crosslightning-base": "^1.0.1",
+    "crosslightning-evm": "^1.0.0",
+    "crosslightning-sdk-base": "^1.0.3",
+    "crypto-browserify": "^3.12.0",
+    "ethers": "^5.7.2",
+    "process": "^0.11.10",
+    "typescript": "^4.9.5"
+  }
+}
