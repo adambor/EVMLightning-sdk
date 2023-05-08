@@ -13,5 +13,13 @@ export const EVMChains = {
             swapContract: "0xF96cCB6e33c3f476D983Eed48817B128193B3bdd",
             btcRelayContract: "0x585005F61A4a56a453fa4e88216c0D37e782fFe3"
         }
+    },
+    Q: {
+        chainId: 35441,
+        addresses: {
+            swapContract: "0x35D0baFC22DCF72aE530df0280d51d7531a4d44F",
+            btcRelayContract: "0x5b9D4C04D7CeC6f52562a0eCcf5Aa61FB49CA7dE"
+        },
+        registryUrl: "https://api.github.com/repos/adambor/QLightning-registry/contents/registry.json?ref=main"
     }
 };
