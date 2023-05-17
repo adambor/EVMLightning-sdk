@@ -225,6 +225,17 @@ export class EVMSwapper {
         await this.frombtc.stop();
     }
 
+    async getSwapCandidates(swapType: SwapType, amount: BN, tokenAddress: string) {
+        let candidates = this.intermediaryDiscovery.getSwapCandidates(swapType, amount, tokenAddress);
+        if(candidates.length===0) {
+            //Retry before failing
+            await this.intermediaryDiscovery.init();
+            candidates = this.intermediaryDiscovery.getSwapCandidates(swapType, amount, tokenAddress);
+        }
+        if(candidates.length===0) throw new Error("No intermediary found!");
+        return candidates;
+    }
+
     /**
      * Creates EVM -> BTC swap
      *
@@ -238,8 +249,7 @@ export class EVMSwapper {
         if(this.intermediaryUrl!=null) {
             return this.tobtc.create(address, amount, confirmationTarget || 3, confirmations || 3, this.intermediaryUrl+"/tobtc");
         }
-        const candidates = this.intermediaryDiscovery.getSwapCandidates(SwapType.TO_BTC, amount, tokenAddress);
-        if(candidates.length===0) throw new Error("No intermediary found!");
+        const candidates = await this.getSwapCandidates(SwapType.TO_BTC, amount, tokenAddress);
 
         let swap;
         for(let candidate of candidates) {
@@ -274,8 +284,7 @@ export class EVMSwapper {
             return this.tobtcln.create(paymentRequest, expirySeconds || (3 * 24 * 3600), this.intermediaryUrl + "/tobtcln");
         }
         const parsedPR = bolt11.decode(paymentRequest);
-        const candidates = this.intermediaryDiscovery.getSwapCandidates(SwapType.TO_BTCLN, new BN(parsedPR.millisatoshis).div(new BN(1000)), tokenAddress);
-        if(candidates.length===0) throw new Error("No intermediary found!");
+        const candidates = await this.getSwapCandidates(SwapType.TO_BTCLN, new BN(parsedPR.millisatoshis).div(new BN(1000)), tokenAddress);
 
         let swap;
         for(let candidate of candidates) {
@@ -309,8 +318,7 @@ export class EVMSwapper {
         if(this.intermediaryUrl!=null) {
             return this.frombtc.create(amount, this.intermediaryUrl+"/frombtc");
         }
-        const candidates = this.intermediaryDiscovery.getSwapCandidates(SwapType.FROM_BTC, amount, tokenAddress);
-        if(candidates.length===0) throw new Error("No intermediary found!");
+        const candidates = await this.getSwapCandidates(SwapType.FROM_BTC, amount, tokenAddress);
 
         let swap;
         for(let candidate of candidates) {
@@ -344,9 +352,7 @@ export class EVMSwapper {
         if(this.intermediaryUrl!=null) {
             return this.frombtcln.create(amount, invoiceExpiry || (1*24*3600), this.intermediaryUrl+"/frombtcln");
         }
-        const candidates = this.intermediaryDiscovery.getSwapCandidates(SwapType.FROM_BTCLN, amount, tokenAddress);
-        if(candidates.length===0) throw new Error("No intermediary found!");
-
+        const candidates = await this.getSwapCandidates(SwapType.FROM_BTCLN, amount, tokenAddress);
 
         let swap;
         for(let candidate of candidates) {
