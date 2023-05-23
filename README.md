@@ -19,6 +19,10 @@ Install EVMLightning SDK
 npm install evmlightning-sdk
 ```
 
+## Intermediary registry
+
+The library by default fetches the available intermediaries from the registry. This registry is for now hosted on github [here](https://github.com/adambor/QLightning-registry) (Q only). If you want to add your intermediary node to the registry, just open the PR on the repo.
+
 ## How to use?
 
 This library is made to work with ethers.js lib and accept ethers.js providers and signers.
@@ -53,12 +57,22 @@ signer.connect(provider);
     ```
 2. Initialize swapper
     ```javascript
-    //Create the swapper instance
-    const swapper = new EVMSwapper(signer, {   
+    //Create the swapper instance (fetching intermediaries from registry)
+    const swapper = new EVMSwapper(signer, {
        swapPrice: swapPricing, //Swap price checker
        bitcoinNetwork: BitcoinNetwork.MAINNET, //Bitcoin network selector
        addresses: chainData.addresses //Contract addresses
     });
+    //OR
+    //Create swapper instance using your intermediary node
+    const _nodeUrl = "http://lorem.ipsum.com:4000"
+    const swapper = new EVMSwapper(signer, {
+       intermediaryUrl: _nodeUrl,
+       swapPrice: swapPricing, //Swap price checker
+       bitcoinNetwork: BitcoinNetwork.MAINNET, //Bitcoin network selector
+       addresses: chainData.addresses //Contract addresses
+    });
+
     //Initialize the swapper
     await swapper.init();
     ```

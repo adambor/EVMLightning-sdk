@@ -1,6 +1,6 @@
 {
   "name": "evmlightning-sdk",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "description": "SDK for cross-chain swaps between EVM chains and bitcoin",
   "main": "./dist/index.js",
   "types:": "./dist/index.d.ts",
