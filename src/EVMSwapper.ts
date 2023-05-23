@@ -4,6 +4,7 @@ import * as BN from "bn.js";
 import {ConstantBTCLNtoSol, ConstantBTCtoSol, ConstantSoltoBTC, ConstantSoltoBTCLN} from "./Constants";
 
 
+import {IWrapperStorage} from "crosslightning-sdk-base";
 import {EVMBtcRelay, EVMSwapData, EVMSwapProgram} from "crosslightning-evm";
 import {EVMChainEventsBrowser} from "crosslightning-evm/dist/evm/events/EVMChainEventsBrowser";
 
@@ -44,7 +45,14 @@ type SwapperOptions = {
         swapContract: string,
         btcRelayContract: string
     },
-    bitcoinNetwork?: BitcoinNetwork
+    bitcoinNetwork?: BitcoinNetwork,
+
+    storage?: {
+        toBtc?: IWrapperStorage,
+        fromBtc?: IWrapperStorage,
+        toBtcLn?: IWrapperStorage,
+        fromBtcLn?: IWrapperStorage,
+    }
 };
 
 export class EVMSwapper {
@@ -132,10 +140,10 @@ export class EVMSwapper {
         });
         const chainEvents = new EVMChainEventsBrowser(provider.provider, this.evmSwapContract);
 
-        this.tobtcln = new SoltoBTCLNWrapper<EVMSwapData>(new LocalWrapperStorage("evmSwaps-toBTCLN"), clientSwapContract, chainEvents, EVMSwapData);
-        this.tobtc = new SoltoBTCWrapper<EVMSwapData>(new LocalWrapperStorage("evmSwaps-toBTC"), clientSwapContract, chainEvents, EVMSwapData);
-        this.frombtcln = new BTCLNtoSolWrapper<EVMSwapData>(new LocalWrapperStorage("evmSwaps-fromBTCLN"), clientSwapContract, chainEvents, EVMSwapData);
-        this.frombtc = new BTCtoSolNewWrapper<EVMSwapData>(new LocalWrapperStorage("evmSwaps-fromBTC"), clientSwapContract, chainEvents, EVMSwapData, synchronizer);
+        this.tobtcln = new SoltoBTCLNWrapper<EVMSwapData>(options.storage?.toBtcLn || new LocalWrapperStorage("evmSwaps-toBTCLN"), clientSwapContract, chainEvents, EVMSwapData);
+        this.tobtc = new SoltoBTCWrapper<EVMSwapData>(options.storage?.toBtc || new LocalWrapperStorage("evmSwaps-toBTC"), clientSwapContract, chainEvents, EVMSwapData);
+        this.frombtcln = new BTCLNtoSolWrapper<EVMSwapData>(options.storage?.fromBtcLn || new LocalWrapperStorage("evmSwaps-fromBTCLN"), clientSwapContract, chainEvents, EVMSwapData);
+        this.frombtc = new BTCtoSolNewWrapper<EVMSwapData>(options.storage?.fromBtc || new LocalWrapperStorage("evmSwaps-fromBTC"), clientSwapContract, chainEvents, EVMSwapData, synchronizer);
 
         this.chainEvents = chainEvents;
         this.swapContract = clientSwapContract;
@@ -247,7 +255,7 @@ export class EVMSwapper {
      */
     async createEVMToBTCSwap(tokenAddress: string, address: string, amount: BN, confirmationTarget?: number, confirmations?: number): Promise<SoltoBTCSwap<EVMSwapData>> {
         if(this.intermediaryUrl!=null) {
-            return this.tobtc.create(address, amount, confirmationTarget || 3, confirmations || 3, this.intermediaryUrl+"/tobtc");
+            return this.tobtc.create(address, amount, confirmationTarget || 3, confirmations || 3, this.intermediaryUrl+"/tobtc", tokenAddress);
         }
         const candidates = await this.getSwapCandidates(SwapType.TO_BTC, amount, tokenAddress);
 
@@ -255,6 +263,42 @@ export class EVMSwapper {
         for(let candidate of candidates) {
             try {
                 swap = await this.tobtc.create(address, amount, confirmationTarget || 3, confirmations || 3, candidate.url+"/tobtc", tokenAddress, candidate.address,
+                    new BN(candidate.services[SwapType.TO_BTC].swapBaseFee),
+                    new BN(candidate.services[SwapType.TO_BTC].swapFeePPM));
+                break;
+            } catch (e) {
+                if(e instanceof IntermediaryError) {
+                    //Blacklist that node
+                    this.intermediaryDiscovery.removeIntermediary(candidate);
+                }
+                console.error(e);
+            }
+        }
+
+        if(swap==null) throw new Error("No intermediary found!");
+
+        return swap;
+    }
+
+    /**
+     * Creates EVM -> BTC swap with exactly specified input token amount
+     *
+     * @param tokenAddress          Token address to pay with
+     * @param address               Recipient's bitcoin address
+     * @param amount                Amount to send in token base units
+     * @param confirmationTarget    How soon should the transaction be confirmed (determines the fee)
+     * @param confirmations         How many confirmations must the intermediary wait to claim the funds
+     */
+    async createEVMToBTCSwapExactIn(tokenAddress: string, address: string, amount: BN, confirmationTarget?: number, confirmations?: number): Promise<SoltoBTCSwap<EVMSwapData>> {
+        if(this.intermediaryUrl!=null) {
+            return this.tobtc.createExactIn(address, amount, confirmationTarget || 3, confirmations || 3, this.intermediaryUrl+"/tobtc", tokenAddress);
+        }
+        const candidates = await this.getSwapCandidates(SwapType.TO_BTC, amount, tokenAddress);
+
+        let swap;
+        for(let candidate of candidates) {
+            try {
+                swap = await this.tobtc.createExactIn(address, amount, confirmationTarget || 3, confirmations || 3, candidate.url+"/tobtc", tokenAddress, candidate.address,
                     new BN(candidate.services[SwapType.TO_BTC].swapBaseFee),
                     new BN(candidate.services[SwapType.TO_BTC].swapFeePPM));
                 break;
@@ -281,7 +325,7 @@ export class EVMSwapper {
      */
     async createEVMToBTCLNSwap(tokenAddress: string, paymentRequest: string, expirySeconds?: number): Promise<SoltoBTCLNSwap<EVMSwapData>> {
         if(this.intermediaryUrl!=null) {
-            return this.tobtcln.create(paymentRequest, expirySeconds || (3 * 24 * 3600), this.intermediaryUrl + "/tobtcln");
+            return this.tobtcln.create(paymentRequest, expirySeconds || (3 * 24 * 3600), this.intermediaryUrl + "/tobtcln", tokenAddress);
         }
         const parsedPR = bolt11.decode(paymentRequest);
         const candidates = await this.getSwapCandidates(SwapType.TO_BTCLN, new BN(parsedPR.millisatoshis).div(new BN(1000)), tokenAddress);
@@ -316,7 +360,7 @@ export class EVMSwapper {
      */
     async createBTCtoEVMSwap(tokenAddress: string, amount: BN): Promise<BTCtoSolNewSwap<EVMSwapData>> {
         if(this.intermediaryUrl!=null) {
-            return this.frombtc.create(amount, this.intermediaryUrl+"/frombtc");
+            return this.frombtc.create(amount, this.intermediaryUrl+"/frombtc", tokenAddress);
         }
         const candidates = await this.getSwapCandidates(SwapType.FROM_BTC, amount, tokenAddress);
 
@@ -350,7 +394,7 @@ export class EVMSwapper {
      */
     async createBTCLNtoEVMSwap(tokenAddress: string, amount: BN, invoiceExpiry?: number): Promise<BTCLNtoSolSwap<EVMSwapData>> {
         if(this.intermediaryUrl!=null) {
-            return this.frombtcln.create(amount, invoiceExpiry || (1*24*3600), this.intermediaryUrl+"/frombtcln");
+            return this.frombtcln.create(amount, invoiceExpiry || (1*24*3600), this.intermediaryUrl+"/frombtcln", tokenAddress);
         }
         const candidates = await this.getSwapCandidates(SwapType.FROM_BTCLN, amount, tokenAddress);
 
@@ -388,6 +432,18 @@ export class EVMSwapper {
     }
 
     /**
+     * Returns all swaps that were initiated with the current provider's public key
+     */
+    getAllSwapsSync(): ISwap[] {
+        return [].concat(
+            this.tobtcln.getAllSwapsSync(),
+            this.tobtc.getAllSwapsSync(),
+            this.frombtcln.getAllSwapsSync(),
+            this.frombtc.getAllSwapsSync(),
+        );
+    }
+
+    /**
      * Returns swaps that were initiated with the current provider's public key, and there is an action required (either claim or refund)
      */
     async getActionableSwaps(): Promise<ISwap[]> {
@@ -396,6 +452,18 @@ export class EVMSwapper {
             await this.tobtc.getRefundableSwaps(),
             await this.frombtcln.getClaimableSwaps(),
             await this.frombtc.getClaimableSwaps(),
+        );
+    }
+
+    /**
+     * Returns swaps that were initiated with the current provider's public key, and there is an action required (either claim or refund)
+     */
+    getActionableSwapsSync(): ISwap[] {
+        return [].concat(
+            this.tobtcln.getRefundableSwapsSync(),
+            this.tobtc.getRefundableSwapsSync(),
+            this.frombtcln.getClaimableSwapsSync(),
+            this.frombtc.getClaimableSwapsSync(),
         );
     }
 
@@ -410,12 +478,32 @@ export class EVMSwapper {
     }
 
     /**
+     * Returns swaps that are refundable and that were initiated with the current provider's public key
+     */
+    getRefundableSwapsSync(): ISolToBTCxSwap<EVMSwapData>[] {
+        return [].concat(
+            this.tobtcln.getRefundableSwapsSync(),
+            this.tobtc.getRefundableSwapsSync()
+        );
+    }
+
+    /**
      * Returns swaps that are in-progress and are claimable that were initiated with the current provider's public key
      */
     async getClaimableSwaps(): Promise<IBTCxtoSolSwap<EVMSwapData>[]> {
         return [].concat(
             await this.frombtcln.getClaimableSwaps(),
             await this.frombtc.getClaimableSwaps()
+        );
+    }
+
+    /**
+     * Returns swaps that are in-progress and are claimable that were initiated with the current provider's public key
+     */
+    getClaimableSwapsSync(): IBTCxtoSolSwap<EVMSwapData>[] {
+        return [].concat(
+            this.frombtcln.getClaimableSwapsSync(),
+            this.frombtc.getClaimableSwapsSync()
         );
     }
 

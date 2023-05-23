@@ -1,71 +1,42 @@
-# SolLightning SDK
+# EVMLightning SDK
 
 An overview of the whole system is available [here](https://github.com/adambor/SolLightning-readme)
 
-A javascript client for SolLightning bitcoin <-> solana trustlesss cross-chain swaps.
+A javascript client for SolLightning bitcoin <-> EVM trustlesss cross-chain swaps.
 
-This project is intended to be used in web-browsers and browser-like environments, it uses browser's local storage to store swap data.
+This project is intended to be used in web-browsers and browser-like environments, it uses (by default) browser's local storage to store swap data.
 
-**NOTE: This library is hardcoded to use bitcoin testnet3 and solana devnet, as it is still in alpha stage and is not safe to use for live systems. MAY contain bugs and uncovered edge-cases**
+**NOTE: This library is still in alpha stage and MAY contain bugs and uncovered edge-cases. Use at your own risk!**
 
 ## Installation
 ```
-npm install sollightning-sdk
+npm install evmlightning-sdk
 ```
 
-## Run the intermediary node
-Is the node handling the Bitcoin <-> Solana cross-chain swaps. Implementation [here](https://github.com/adambor/SolLightning-Intermediary)
-
-For now this SDK needs to configured as to which intermediary node to use. In the future there should be a registry containing all the nodes (with their reputation and swap fees) so client SDK can choose the desired node itself automatically, or try sending the swap request to multiple nodes, should one of them fail or not have enough liquidity.
-
 ## How to use?
+
+This library is made to work with ethers.js lib and accept ethers.js providers and signers.
+
 ### Peparations
 ```javascript
-//React, using solana wallet adapter
-const wallet = useAnchorWallet();
-const {connection} = useConnection();
+//Using metamask
+const provider = new ethers.providers.Web3Provider(window.ethereum);
+await provider.send("eth_requestAccounts", []);
+const signer = provider.getSigner();
 ```
 or
 ```javascript
-//Creating a wallet and connection from scratch
-const signer = Keypair.fromSecretKey(_privateKey); //Or Keypair.generate() to generate new one
-const wallet = new Wallet(signer);   
-const connection = new Connection(_solanaRpcUrl, "processed");
+//Creating a wallet and provider from scratch
+const provider = new ethers.providers.JsonRpcProvider(_rpcUrl);
+const signer = new ethers.Wallet(_privateKey); //Or ethers.Wallet.createRandom() to generate new one
+signer.connect(provider);
 ```
 
-### Initialization (using own intermediary node)
+### Initialization
 1. Create swap price checker
     ```javascript
     //Defines swap token amount differences tolerance in PPM (1000000 = 100%)
-    const _swapDifferenceTolerance = 2500; //Max allowed difference 0.25%
-    //Create swap pricing instance
-    const swapPricing = new CoinGeckoSwapPrice(
-       new BN(_swapDifferenceTolerance),
-       CoinGeckoSwapPrice.createCoinsMap(_wbtcAddress, _usdcAddress, _usdtAddress) //Addresses of created WBTC, USDC and USDT tokens from intermediary instance - see intermediary node's instructions
-    );
-    ```
-2. Create AnchorProvider and initialize swapper
-    ```javascript
-    //Create anchor provider
-    const anchorProvider = new AnchorProvider(connection, wallet, {preflightCommitment: "processed"});
-    //Create the swapper instance
-    const swapper = new Swapper(anchorProvider, {
-       swapPrice: swapPricing,
-       intermediaryUrl: _intermediaryUrl //URL of the running intermediary node instance
-    });
-    //Initialize the swapper
-    await swapper.init();
-    ```
-
-### Initialization (using existing node registry)
-Existing token addresses:
- * __WBTC__: Ag6gw668H9PLQFyP482whvGDoAseBWfgs5AfXCAK3aMj
- * __USDC__: 6jrUSQHX8MTJbtWpdbx65TAwUv1rLyCF6fVjr9yELS75
- * __USDT__: Ar5yfeSyDNDHyq1GvtcrDKjNcoVTQiv7JaVvuMDbGNDT
-1. Create swap price checker
-    ```javascript
-    //Defines swap token amount differences tolerance in PPM (1000000 = 100%)
-    const _swapDifferenceTolerance = 2500; //Max allowed difference 0.25%
+    const _swapDifferenceTolerance = 5000; //Max allowed difference 0.5%
     //Create swap pricing instance
     const swapPricing = new CoinGeckoSwapPrice(new BN(_swapDifferenceTolerance));
     ```
