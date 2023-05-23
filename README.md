@@ -9,6 +9,12 @@ This project is intended to be used in web-browsers and browser-like environment
 **NOTE: This library is still in alpha stage and MAY contain bugs and uncovered edge-cases. Use at your own risk!**
 
 ## Installation
+Install ethers.js (version 5)
+```
+npm install ethers@5
+```
+
+Install EVMLightning SDK
 ```
 npm install evmlightning-sdk
 ```
@@ -38,22 +44,29 @@ signer.connect(provider);
     //Defines swap token amount differences tolerance in PPM (1000000 = 100%)
     const _swapDifferenceTolerance = 5000; //Max allowed difference 0.5%
     //Create swap pricing instance
-    const swapPricing = new CoinGeckoSwapPrice(new BN(_swapDifferenceTolerance));
+    const _chain = "Q"; //Q or POLYGON
+    const chainData = EVMChains[_chain];
+    const swapPricing = new CoinGeckoSwapPrice(
+       new BN(_swapDifferenceTolerance),
+       CoinGeckoSwapPrice.createCoinsMap(chainData.tokens, chainData.coinGeckoId)
+    );
     ```
-2. Create AnchorProvider and initialize swapper
+2. Initialize swapper
     ```javascript
-    //Create anchor provider
-    const anchorProvider = new AnchorProvider(connection, wallet, {preflightCommitment: "processed"});
     //Create the swapper instance
-    const swapper = new Swapper(anchorProvider, {swapPrice: swapPricing});
+    const swapper = new EVMSwapper(signer, {   
+       swapPrice: swapPricing, //Swap price checker
+       bitcoinNetwork: BitcoinNetwork.MAINNET, //Bitcoin network selector
+       addresses: chainData.addresses //Contract addresses
+    });
     //Initialize the swapper
     await swapper.init();
     ```
 
-### Swap Solana -> BTC
+### Swap EVM -> BTC
 ```javascript
-//Create the swap: swapping _useToken to BTC
-const swap = await swapper.createSolToBTCSwap(new PublicKey(_useToken), _address, _amount);
+//Create the swap: swapping _useToken to BTC, where _useToken is the address of the token
+const swap = await swapper.createEVMToBTCSwap(_useToken, _address, _amount);
 //Get the amount required to pay and fee
 const amountToBePaid = swap.getInAmount();
 const fee = swap.getFee();
@@ -69,10 +82,10 @@ if(!result) {
 }
 ```
 
-### Swap Solana -> BTCLN
+### Swap EVM -> BTCLN
 ```javascript
-//Create the swap: swapping _useToken to BTC
-const swap = await swapper.createSolToBTCLNSwap(new PublicKey(_useToken), _lightningInvoice);
+//Create the swap: swapping _useToken to BTC, where _useToken is the address of the token
+const swap = await swapper.createEVMToBTCLNSwap(_useToken, _lightningInvoice);
 //Get the amount required to pay and fee
 const amountToBePaid = swap.getInAmount();
 const fee = swap.getFee();
@@ -88,10 +101,10 @@ if(!result) {
 }
 ```
 
-### Swap BTC -> Solana
+### Swap BTC -> EVM
 ```javascript
-//Create the swap: swapping BTC to _useToken
-const swap = await swapper.createBTCtoSolSwap(new PublicKey(_useToken), _amount);
+//Create the swap: swapping BTC to _useToken, where _useToken is the address of the token
+const swap = await swapper.createBTCtoEVMSwap(_useToken, _amount);
 const amountToBePaidOnBitcoin = swap.getInAmount(); //The amount received MUST match
 const amountToBeReceivedOnSolana = swap.getOutAmount(); //Get the amount we will receive on Solana
 const fee = swap.getFee();
@@ -118,10 +131,10 @@ try {
 }
 ```
 
-### Swap BTCLN -> Solana
+### Swap BTCLN -> EVM
 ```javascript
-//Create the swap: swapping BTC to _useToken
-const swap = await swapper.createBTCLNtoSolSwap(new PublicKey(_useToken), _amount);
+//Create the swap: swapping BTC to _useToken, where _useToken is the address of the token
+const swap = await swapper.createBTCLNtoEVMSwap(new PublicKey(_useToken), _amount);
 //Get the bitcoin lightning network invoice (the invoice contains pre-entered amount)
 const receivingLightningInvoice = swap.getAddress();
 //Get the QR code (contains the lightning network invoice)

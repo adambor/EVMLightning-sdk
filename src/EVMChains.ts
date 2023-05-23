@@ -1,5 +1,27 @@
 
 export const EVMChains = {
+    Q_TESTNET: {
+        chainId: 35443,
+        addresses: {
+            swapContract: "0x35D0baFC22DCF72aE530df0280d51d7531a4d44F",
+            btcRelayContract: "0x5b9D4C04D7CeC6f52562a0eCcf5Aa61FB49CA7dE"
+        }
+    },
+    Q: {
+        chainId: 35441,
+        addresses: {
+            swapContract: "0x35D0baFC22DCF72aE530df0280d51d7531a4d44F",
+            btcRelayContract: "0x5b9D4C04D7CeC6f52562a0eCcf5Aa61FB49CA7dE"
+        },
+        tokens: {
+            WBTC: "0x864779670a7b3205580d0a3Be85744954ab075e7",
+            USDC: "0xC382cA00c56023C4A870473f14890A023Ca4706f",
+            USDT: "0x1234912185912561275418727185781012124012",
+            ETH: "0x0000000000000000000000000000000000000000"
+        },
+        coinGeckoId: "$ignore",
+        registryUrl: "https://api.github.com/repos/adambor/QLightning-registry/contents/registry.json?ref=main"
+    },
     POLYGON_TESTNET : {
         chainId: 80001,
         addresses: {
@@ -12,14 +34,13 @@ export const EVMChains = {
         addresses: {
             swapContract: "0xF96cCB6e33c3f476D983Eed48817B128193B3bdd",
             btcRelayContract: "0x585005F61A4a56a453fa4e88216c0D37e782fFe3"
-        }
-    },
-    Q: {
-        chainId: 35441,
-        addresses: {
-            swapContract: "0x35D0baFC22DCF72aE530df0280d51d7531a4d44F",
-            btcRelayContract: "0x5b9D4C04D7CeC6f52562a0eCcf5Aa61FB49CA7dE"
         },
-        registryUrl: "https://api.github.com/repos/adambor/QLightning-registry/contents/registry.json?ref=main"
+        tokens: {
+            WBTC: "0x1bfd67037b42cf73acf2047067bd4f2c47d9bfd6",
+            USDC: "0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174",
+            USDT: "0xc2132D05D31c914a87C6611C10748AEb04B58e8F",
+            ETH: "0x0000000000000000000000000000000000000000"
+        },
+        coinGeckoId: "matic-network"
     }
 };

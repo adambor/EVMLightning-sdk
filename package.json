@@ -28,7 +28,7 @@
     "cross-fetch": "^3.1.5",
     "crosslightning-base": "^2.0.2",
     "crosslightning-evm": "^2.0.1",
-    "crosslightning-sdk-base": "^2.0.4",
+    "crosslightning-sdk-base": "^2.0.5",
     "crypto-browserify": "^3.12.0",
     "ethers": "^5.7.2",
     "process": "^0.11.10",
