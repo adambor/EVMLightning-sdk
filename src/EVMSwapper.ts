@@ -322,10 +322,12 @@ export class EVMSwapper {
      * @param tokenAddress          Token address to pay with
      * @param paymentRequest        BOLT11 lightning network invoice to be paid (needs to have a fixed amount)
      * @param expirySeconds         For how long to lock your funds (higher expiry means higher probability of payment success)
+     * @param maxRoutingBaseFee     Maximum routing fee to use - base fee (higher routing fee means higher probability of payment success)
+     * @param maxRoutingPPM         Maximum routing fee to use - proportional fee in PPM (higher routing fee means higher probability of payment success)
      */
-    async createEVMToBTCLNSwap(tokenAddress: string, paymentRequest: string, expirySeconds?: number): Promise<SoltoBTCLNSwap<EVMSwapData>> {
+    async createEVMToBTCLNSwap(tokenAddress: string, paymentRequest: string, expirySeconds?: number, maxRoutingBaseFee?: BN, maxRoutingPPM?: BN): Promise<SoltoBTCLNSwap<EVMSwapData>> {
         if(this.intermediaryUrl!=null) {
-            return this.tobtcln.create(paymentRequest, expirySeconds || (3 * 24 * 3600), this.intermediaryUrl + "/tobtcln", tokenAddress);
+            return this.tobtcln.create(paymentRequest, expirySeconds || (3 * 24 * 3600), this.intermediaryUrl + "/tobtcln", maxRoutingBaseFee, maxRoutingPPM, tokenAddress);
         }
         const parsedPR = bolt11.decode(paymentRequest);
         const candidates = await this.getSwapCandidates(SwapType.TO_BTCLN, new BN(parsedPR.millisatoshis).div(new BN(1000)), tokenAddress);
@@ -333,7 +335,7 @@ export class EVMSwapper {
         let swap;
         for(let candidate of candidates) {
             try {
-                swap = await this.tobtcln.create(paymentRequest, expirySeconds || (3*24*3600), candidate.url+"/tobtcln", tokenAddress, candidate.address,
+                swap = await this.tobtcln.create(paymentRequest, expirySeconds || (3*24*3600), candidate.url+"/tobtcln", maxRoutingBaseFee, maxRoutingPPM, tokenAddress, candidate.address,
                     new BN(candidate.services[SwapType.TO_BTCLN].swapBaseFee),
                     new BN(candidate.services[SwapType.TO_BTCLN].swapFeePPM));
                 break;
