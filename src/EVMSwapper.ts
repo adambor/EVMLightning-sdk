@@ -135,7 +135,7 @@ export class EVMSwapper {
 
         this.evmSwapContract = new EVMSwapProgram(provider, btcRelay, options.addresses.swapContract);
 
-        const clientSwapContract = new ClientSwapContract<EVMSwapData>(this.evmSwapContract, EVMSwapData, null, options.pricing, {
+        const clientSwapContract = new ClientSwapContract<EVMSwapData>(this.evmSwapContract, EVMSwapData, btcRelay, bitcoinRpc, null, options.pricing, {
             bitcoinNetwork: this.bitcoinNetwork
         });
         const chainEvents = new EVMChainEventsBrowser(provider.provider, this.evmSwapContract);

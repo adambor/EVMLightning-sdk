@@ -10,7 +10,7 @@ export const EVMChains = {
     Q: {
         chainId: 35441,
         addresses: {
-            swapContract: "0x35D0baFC22DCF72aE530df0280d51d7531a4d44F",
+            swapContract: "0x79CDD6a3dcfCD837FA910945CaB7d10FA90b3327",
             btcRelayContract: "0x5b9D4C04D7CeC6f52562a0eCcf5Aa61FB49CA7dE"
         },
         tokens: {
@@ -32,8 +32,8 @@ export const EVMChains = {
     POLYGON : {
         chainId: 137,
         addresses: {
-            swapContract: "0xF96cCB6e33c3f476D983Eed48817B128193B3bdd",
-            btcRelayContract: "0x585005F61A4a56a453fa4e88216c0D37e782fFe3"
+            swapContract: "0x0d771417E65Bd58D64ADa73A83EE7FAca3c002f1",
+            btcRelayContract: "0x5E2221D70c4cDD2854E13A00fF4a9BD617bF701B"
         },
         tokens: {
             WBTC: "0x1bfd67037b42cf73acf2047067bd4f2c47d9bfd6",
