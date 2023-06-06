@@ -10,8 +10,8 @@ export const EVMChains = {
     Q: {
         chainId: 35441,
         addresses: {
-            swapContract: "0x79CDD6a3dcfCD837FA910945CaB7d10FA90b3327",
-            btcRelayContract: "0x5b9D4C04D7CeC6f52562a0eCcf5Aa61FB49CA7dE"
+            swapContract: "0x9f6990903AD1b7Afd7c9DD7Ddeb61f2A5Fe28c6D",
+            btcRelayContract: "0xaE7b04B89c9B4D5F85AC6B881697f39020CE4BE2"
         },
         tokens: {
             WBTC: "0x864779670a7b3205580d0a3Be85744954ab075e7",
