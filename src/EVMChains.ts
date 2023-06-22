@@ -41,6 +41,7 @@ export const EVMChains = {
             USDT: "0xc2132D05D31c914a87C6611C10748AEb04B58e8F",
             ETH: "0x0000000000000000000000000000000000000000"
         },
-        coinGeckoId: "matic-network"
+        coinGeckoId: "matic-network",
+        registryUrl: null
     }
 };

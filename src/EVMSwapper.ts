@@ -4,7 +4,7 @@ import * as BN from "bn.js";
 import {ConstantBTCLNtoSol, ConstantBTCtoSol, ConstantSoltoBTC, ConstantSoltoBTCLN} from "./Constants";
 
 
-import {IWrapperStorage} from "crosslightning-sdk-base";
+import {CoinGeckoSwapPrice, IWrapperStorage, LNURLPay, LNURLWithdraw} from "crosslightning-sdk-base";
 import {EVMBtcRelay, EVMSwapData, EVMSwapProgram} from "crosslightning-evm";
 import {EVMChainEventsBrowser} from "crosslightning-evm/dist/evm/events/EVMChainEventsBrowser";
 
@@ -28,12 +28,12 @@ import {
     SoltoBTCLNWrapper,
     SoltoBTCSwap,
     SoltoBTCWrapper,
-    SwapType
+    SwapType,
+    ChainUtils
 } from "crosslightning-sdk-base";
 import {Signer} from "ethers";
 import {EVMChains} from "./EVMChains";
 import {BitcoinNetwork} from "./BitcoinNetwork";
-import {ChainUtils} from "crosslightning-sdk-base/dist";
 
 type SwapperOptions = {
     intermediaryUrl?: string,
@@ -99,6 +99,24 @@ export class EVMSwapper {
     }
 
     /**
+     * Returns true if string is a valid LNURL (no checking on type is performed)
+     *
+     * @param lnurl
+     */
+    isValidLNURL(lnurl: string): boolean {
+        return this.swapContract.isLNURL(lnurl);
+    }
+
+    /**
+     * Returns type and data about an LNURL
+     *
+     * @param lnurl
+     */
+    getLNURLTypeAndData(lnurl: string): Promise<LNURLPay | LNURLWithdraw | null> {
+        return this.swapContract.getLNURLType(lnurl);
+    }
+
+    /**
      * Returns satoshi value of BOLT11 bitcoin lightning invoice WITH AMOUNT
      *
      * @param lnpr
@@ -107,6 +125,34 @@ export class EVMSwapper {
         const parsed = bolt11.decode(lnpr);
         if(parsed.satoshis!=null) return new BN(parsed.satoshis);
         return null;
+    }
+
+
+    static createSwapperOptions(chain: "Q" | "POLYGON", maxFeeDifference?: BN) {
+        const coinsMap = CoinGeckoSwapPrice.createCoinsMap(
+            EVMChains[chain].tokens.WBTC,
+            EVMChains[chain].tokens.USDC,
+            EVMChains[chain].tokens.USDT
+        );
+
+        coinsMap[EVMChains[chain].tokens.ETH] = {
+            coinId: EVMChains[chain].coinGeckoId,
+            decimals: 18
+        };
+
+        return {
+            pricing: new CoinGeckoSwapPrice(
+                maxFeeDifference || new BN(5000),
+                coinsMap
+            ),
+            registryUrl: EVMChains[chain].registryUrl,
+
+            addresses: {
+                swapContract: EVMChains[chain].addresses.swapContract,
+                btcRelayContract: EVMChains[chain].addresses.btcRelayContract
+            },
+            bitcoinNetwork: BitcoinNetwork.MAINNET
+        }
     }
 
     constructor(provider: Signer, options?: SwapperOptions) {
@@ -260,6 +306,7 @@ export class EVMSwapper {
         const candidates = await this.getSwapCandidates(SwapType.TO_BTC, amount, tokenAddress);
 
         let swap;
+        let error;
         for(let candidate of candidates) {
             try {
                 swap = await this.tobtc.create(address, amount, confirmationTarget || 3, confirmations || 3, candidate.url+"/tobtc", tokenAddress, candidate.address,
@@ -272,10 +319,14 @@ export class EVMSwapper {
                     this.intermediaryDiscovery.removeIntermediary(candidate);
                 }
                 console.error(e);
+                error = e;
             }
         }
 
-        if(swap==null) throw new Error("No intermediary found!");
+        if(swap==null) {
+            if(error!=null) throw error;
+            throw new Error("No intermediary found!");
+        }
 
         return swap;
     }
@@ -296,6 +347,7 @@ export class EVMSwapper {
         const candidates = await this.getSwapCandidates(SwapType.TO_BTC, amount, tokenAddress);
 
         let swap;
+        let error;
         for(let candidate of candidates) {
             try {
                 swap = await this.tobtc.createExactIn(address, amount, confirmationTarget || 3, confirmations || 3, candidate.url+"/tobtc", tokenAddress, candidate.address,
@@ -308,10 +360,14 @@ export class EVMSwapper {
                     this.intermediaryDiscovery.removeIntermediary(candidate);
                 }
                 console.error(e);
+                error = e;
             }
         }
 
-        if(swap==null) throw new Error("No intermediary found!");
+        if(swap==null) {
+            if(error!=null) throw error;
+            throw new Error("No intermediary found!");
+        }
 
         return swap;
     }
@@ -333,6 +389,7 @@ export class EVMSwapper {
         const candidates = await this.getSwapCandidates(SwapType.TO_BTCLN, new BN(parsedPR.millisatoshis).div(new BN(1000)), tokenAddress);
 
         let swap;
+        let error;
         for(let candidate of candidates) {
             try {
                 swap = await this.tobtcln.create(paymentRequest, expirySeconds || (3*24*3600), candidate.url+"/tobtcln", maxRoutingBaseFee, maxRoutingPPM, tokenAddress, candidate.address,
@@ -345,14 +402,63 @@ export class EVMSwapper {
                     this.intermediaryDiscovery.removeIntermediary(candidate);
                 }
                 console.error(e);
+                error = e;
             }
         }
 
-        if(swap==null) throw new Error("No intermediary found!");
+        if(swap==null) {
+            if(error!=null) throw error;
+            throw new Error("No intermediary found!");
+        }
 
         return swap;
 
     }
+
+    /**
+     * Creates EVM -> BTCLN swap via LNURL-pay
+     *
+     * @param tokenAddress          Token address to pay with
+     * @param lnurlPay              LNURL-pay link to use for the payment
+     * @param amount                Amount to be paid in sats
+     * @param comment               Optional comment for the payment
+     * @param expirySeconds         For how long to lock your funds (higher expiry means higher probability of payment success)
+     * @param maxRoutingBaseFee     Maximum routing fee to use - base fee (higher routing fee means higher probability of payment success)
+     * @param maxRoutingPPM         Maximum routing fee to use - proportional fee in PPM (higher routing fee means higher probability of payment success)
+     */
+    async createEVMToBTCLNSwapViaLNURL(tokenAddress: string, lnurlPay: string, amount: BN, comment: string, expirySeconds?: number, maxRoutingBaseFee?: BN, maxRoutingPPM?: BN): Promise<SoltoBTCLNSwap<EVMSwapData>> {
+        if(this.intermediaryUrl!=null) {
+            return this.tobtcln.createViaLNURL(lnurlPay, amount, comment, expirySeconds || (3 * 24 * 3600), this.intermediaryUrl + "/tobtcln", maxRoutingBaseFee, maxRoutingPPM, tokenAddress);
+        }
+        const candidates = await this.getSwapCandidates(SwapType.TO_BTCLN, amount, tokenAddress);
+
+        let swap;
+        let error;
+        for(let candidate of candidates) {
+            try {
+                swap = await this.tobtcln.createViaLNURL(lnurlPay, amount, comment, expirySeconds || (3*24*3600), candidate.url+"/tobtcln", maxRoutingBaseFee, maxRoutingPPM, tokenAddress, candidate.address,
+                    new BN(candidate.services[SwapType.TO_BTCLN].swapBaseFee),
+                    new BN(candidate.services[SwapType.TO_BTCLN].swapFeePPM));
+                break;
+            } catch (e) {
+                if(e instanceof IntermediaryError) {
+                    //Blacklist that node
+                    this.intermediaryDiscovery.removeIntermediary(candidate);
+                }
+                console.error(e);
+                error = e;
+            }
+        }
+
+        if(swap==null) {
+            if(error!=null) throw error;
+            throw new Error("No intermediary found!");
+        }
+
+        return swap;
+
+    }
+
 
     /**
      * Creates BTC -> EVM swap
@@ -367,6 +473,7 @@ export class EVMSwapper {
         const candidates = await this.getSwapCandidates(SwapType.FROM_BTC, amount, tokenAddress);
 
         let swap;
+        let error;
         for(let candidate of candidates) {
             try {
                 swap = await this.frombtc.create(amount, candidate.url+"/frombtc", tokenAddress, candidate.address,
@@ -379,10 +486,14 @@ export class EVMSwapper {
                     this.intermediaryDiscovery.removeIntermediary(candidate);
                 }
                 console.error(e);
+                error = e;
             }
         }
 
-        if(swap==null) throw new Error("No intermediary found!");
+        if(swap==null) {
+            if(error!=null) throw error;
+            throw new Error("No intermediary found!");
+        }
 
         return swap;
     }
@@ -401,6 +512,7 @@ export class EVMSwapper {
         const candidates = await this.getSwapCandidates(SwapType.FROM_BTCLN, amount, tokenAddress);
 
         let swap;
+        let error;
         for(let candidate of candidates) {
             try {
                 swap = await this.frombtcln.create(amount, invoiceExpiry || (1*24*3600), candidate.url+"/frombtcln", tokenAddress, candidate.address,
@@ -413,10 +525,54 @@ export class EVMSwapper {
                     this.intermediaryDiscovery.removeIntermediary(candidate);
                 }
                 console.error(e);
+                error = e;
             }
         }
 
-        if(swap==null) throw new Error("No intermediary found!");
+        if(swap==null) {
+            if(error!=null) throw error;
+            throw new Error("No intermediary found!");
+        }
+
+        return swap;
+    }
+
+    /**
+     * Creates BTCLN -> EVM swap, withdrawing from LNURL-withdraw
+     *
+     * @param lnurl             LNURL-withdraw to pull the funds from
+     * @param tokenAddress      Token address to receive
+     * @param amount            Amount to receive, in satoshis (bitcoin's smallest denomination)
+     * @param invoiceExpiry     Lightning invoice expiry time (in seconds)
+     */
+    async createBTCLNtoEVMSwapViaLNURL(lnurl: string, tokenAddress: string, amount: BN, invoiceExpiry?: number): Promise<BTCLNtoSolSwap<EVMSwapData>> {
+        if(this.intermediaryUrl!=null) {
+            return this.frombtcln.createViaLNURL(lnurl, amount, invoiceExpiry || (1*24*3600), this.intermediaryUrl+"/frombtcln", tokenAddress);
+        }
+        const candidates = await this.getSwapCandidates(SwapType.FROM_BTCLN, amount, tokenAddress);
+
+        let swap;
+        let error;
+        for(let candidate of candidates) {
+            try {
+                swap = await this.frombtcln.createViaLNURL(lnurl, amount, invoiceExpiry || (1*24*3600), candidate.url+"/frombtcln", tokenAddress, candidate.address,
+                    new BN(candidate.services[SwapType.FROM_BTCLN].swapBaseFee),
+                    new BN(candidate.services[SwapType.FROM_BTCLN].swapFeePPM));
+                break;
+            } catch (e) {
+                if(e instanceof IntermediaryError) {
+                    //Blacklist that node
+                    this.intermediaryDiscovery.removeIntermediary(candidate);
+                }
+                console.error(e);
+                error = e;
+            }
+        }
+
+        if(swap==null) {
+            if(error!=null) throw error;
+            throw new Error("No intermediary found!");
+        }
 
         return swap;
     }
