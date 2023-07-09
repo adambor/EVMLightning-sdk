@@ -7,7 +7,15 @@ export const EVMChains = {
             swapContract: "0x35D0baFC22DCF72aE530df0280d51d7531a4d44F",
             btcRelayContract: "0x5b9D4C04D7CeC6f52562a0eCcf5Aa61FB49CA7dE"
         },
-        bitcoinNetwork: BitcoinNetwork.TESTNET
+        tokens: {
+            WBTC: null,
+            USDC: null,
+            USDT: null,
+            ETH: "0x0000000000000000000000000000000000000000"
+        },
+        bitcoinNetwork: BitcoinNetwork.TESTNET,
+        registryUrl: null,
+        coinGeckoId: "$ignore"
     },
     Q: {
         chainId: 35441,
@@ -31,7 +39,15 @@ export const EVMChains = {
             swapContract: "0x140b71Bbc5605C97065CD22A3dFD0fe81260Be2F",
             btcRelayContract: "0xEB8546E8B955b7564239Be8452AC2a8B24c07Ed7"
         },
-        bitcoinNetwork: BitcoinNetwork.TESTNET
+        tokens: {
+            WBTC: null,
+            USDC: null,
+            USDT: null,
+            ETH: "0x0000000000000000000000000000000000000000"
+        },
+        bitcoinNetwork: BitcoinNetwork.TESTNET,
+        registryUrl: null,
+        coinGeckoId: "matic-network",
     },
     POLYGON : {
         chainId: 137,

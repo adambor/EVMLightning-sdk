@@ -35,7 +35,7 @@ import {Signer} from "ethers";
 import {EVMChains} from "./EVMChains";
 import {BitcoinNetwork} from "./BitcoinNetwork";
 
-type SwapperOptions = {
+export type SwapperOptions = {
     intermediaryUrl?: string,
     //wbtcToken?: PublicKey,
     pricing?: ISwapPrice,
@@ -128,14 +128,14 @@ export class EVMSwapper {
     }
 
 
-    static createSwapperOptions(chain: "Q" | "POLYGON" | "LINEA_TESTNET", maxFeeDifference?: BN, intermediaryUrl?: string, tokenAddresses?: {WBTC: string, USDC: string, USDT: string}): SwapperOptions {
+    static createSwapperOptions(chain: "Q" | "Q_TESTNET" | "POLYGON" | "POLYGON_TESTNET" | "LINEA_TESTNET", maxFeeDifference?: BN, intermediaryUrl?: string, tokenAddresses?: {WBTC: string, USDC: string, USDT: string}): SwapperOptions {
         const coinsMap = CoinGeckoSwapPrice.createCoinsMap(
             EVMChains[chain].tokens.WBTC || tokenAddresses?.WBTC,
             EVMChains[chain].tokens.USDC || tokenAddresses?.USDC,
             EVMChains[chain].tokens.USDT || tokenAddresses?.USDT
         );
 
-        coinsMap[EVMChains[chain].tokens.ETH] = {
+        coinsMap["0x0000000000000000000000000000000000000000"] = {
             coinId: EVMChains[chain].coinGeckoId,
             decimals: 18
         };
