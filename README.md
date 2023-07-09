@@ -289,11 +289,11 @@ LNURLs & lightning identifiers:
 It is good practice to automatically distinguish between lightning network invoices & LNURLs and adjust the UI accordingly.
 Therefore there are a few helper functions to help with that:
 ```typescript
-const isLNInvoice: boolean = EVMSwapper.isValidLightningInvoice(_input); //Checks if the input is lightning network invoice
-const isLNURL: boolean = EVMSwapper.isValidLNURL(_input); //Checks if the input is LNURL or lightning identifier
+const isLNInvoice: boolean = swapper.isValidLightningInvoice(_input); //Checks if the input is lightning network invoice
+const isLNURL: boolean = swapper.isValidLNURL(_input); //Checks if the input is LNURL or lightning identifier
 if(isLNURL) {
     //Get the type of the LNURL
-    const result: (LNURLPay | LNURLWithdraw | null) = EVMSwapper.getLNURLTypeAndData(_input);
+    const result: (LNURLPay | LNURLWithdraw | null) = await swapper.getLNURLTypeAndData(_input);
     if(result.type==="pay") {
         const lnurlPayData: LNURLPay = result;
         const minPayable: BN = lnurlPayData.min; //Minimum payment amount in satoshis
