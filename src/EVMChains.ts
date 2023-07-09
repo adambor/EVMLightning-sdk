@@ -1,3 +1,4 @@
+import {BitcoinNetwork} from "./BitcoinNetwork";
 
 export const EVMChains = {
     Q_TESTNET: {
@@ -5,7 +6,8 @@ export const EVMChains = {
         addresses: {
             swapContract: "0x35D0baFC22DCF72aE530df0280d51d7531a4d44F",
             btcRelayContract: "0x5b9D4C04D7CeC6f52562a0eCcf5Aa61FB49CA7dE"
-        }
+        },
+        bitcoinNetwork: BitcoinNetwork.TESTNET
     },
     Q: {
         chainId: 35441,
@@ -20,14 +22,16 @@ export const EVMChains = {
             ETH: "0x0000000000000000000000000000000000000000"
         },
         coinGeckoId: "$ignore",
-        registryUrl: "https://api.github.com/repos/adambor/QLightning-registry/contents/registry.json?ref=main"
+        registryUrl: "https://api.github.com/repos/adambor/QLightning-registry/contents/registry.json?ref=main",
+        bitcoinNetwork: BitcoinNetwork.MAINNET
     },
     POLYGON_TESTNET : {
         chainId: 80001,
         addresses: {
             swapContract: "0x140b71Bbc5605C97065CD22A3dFD0fe81260Be2F",
             btcRelayContract: "0xEB8546E8B955b7564239Be8452AC2a8B24c07Ed7"
-        }
+        },
+        bitcoinNetwork: BitcoinNetwork.TESTNET
     },
     POLYGON : {
         chainId: 137,
@@ -42,6 +46,23 @@ export const EVMChains = {
             ETH: "0x0000000000000000000000000000000000000000"
         },
         coinGeckoId: "matic-network",
-        registryUrl: null
+        registryUrl: null,
+        bitcoinNetwork: BitcoinNetwork.MAINNET
+    },
+    LINEA_TESTNET: {
+        chainId: 59140,
+        addresses: {
+            swapContract: "0x9360b08276Fe610A41A18a787a7B9EC65E224BcE",
+            btcRelayContract: "0xB9CA45e93Ba54ba834C66b8Db568A41f89b5aA16"
+        },
+        tokens: {
+            WBTC: "0xDbcd5BafBAA8c1B326f14EC0c8B125DB57A5cC4c",
+            USDC: "0xf56dc6695cF1f5c364eDEbC7Dc7077ac9B586068",
+            USDT: "0x1990BC6dfe2ef605Bfc08f5A23564dB75642Ad73",
+            ETH: "0x0000000000000000000000000000000000000000"
+        },
+        coinGeckoId: "ethereum",
+        registryUrl: null,
+        bitcoinNetwork: BitcoinNetwork.TESTNET
     }
 };

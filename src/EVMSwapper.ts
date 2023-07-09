@@ -128,11 +128,11 @@ export class EVMSwapper {
     }
 
 
-    static createSwapperOptions(chain: "Q" | "POLYGON", maxFeeDifference?: BN) {
+    static createSwapperOptions(chain: "Q" | "POLYGON" | "LINEA_TESTNET", maxFeeDifference?: BN, intermediaryUrl?: string, tokenAddresses?: {WBTC: string, USDC: string, USDT: string}): SwapperOptions {
         const coinsMap = CoinGeckoSwapPrice.createCoinsMap(
-            EVMChains[chain].tokens.WBTC,
-            EVMChains[chain].tokens.USDC,
-            EVMChains[chain].tokens.USDT
+            EVMChains[chain].tokens.WBTC || tokenAddresses?.WBTC,
+            EVMChains[chain].tokens.USDC || tokenAddresses?.USDC,
+            EVMChains[chain].tokens.USDT || tokenAddresses?.USDT
         );
 
         coinsMap[EVMChains[chain].tokens.ETH] = {
@@ -151,7 +151,8 @@ export class EVMSwapper {
                 swapContract: EVMChains[chain].addresses.swapContract,
                 btcRelayContract: EVMChains[chain].addresses.btcRelayContract
             },
-            bitcoinNetwork: BitcoinNetwork.MAINNET
+            bitcoinNetwork: EVMChains[chain].bitcoinNetwork,
+            intermediaryUrl: intermediaryUrl
         }
     }
 
