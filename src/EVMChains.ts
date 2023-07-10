@@ -1,6 +1,28 @@
 import {BitcoinNetwork} from "./BitcoinNetwork";
 
-export const EVMChains = {
+export const EVMChains: {
+    [name: string]: {
+        chainId: number,
+        addresses: {
+            swapContract: string,
+            btcRelayContract: string
+        },
+        tokens: {
+            WBTC: string,
+            USDC: string,
+            USDT: string,
+            ETH: string
+        },
+        bitcoinNetwork: BitcoinNetwork,
+        registryUrl: string,
+        coinGeckoId: string,
+        tokenDecimals?: {
+            WBTC: number,
+            USDC: number,
+            USDT: number,
+        }
+    }
+} = {
     Q_TESTNET: {
         chainId: 35443,
         addresses: {
@@ -80,5 +102,26 @@ export const EVMChains = {
         coinGeckoId: "ethereum",
         registryUrl: null,
         bitcoinNetwork: BitcoinNetwork.TESTNET
+    },
+    OKTC: {
+        chainId: 66,
+        addresses: {
+            swapContract: "0x7a77a7d2Cf91e3Cbc807434458570472445720C1",
+            btcRelayContract: "0xAEaAdDc26134AA1216E13cAb1190982104591ce2"
+        },
+        tokens: {
+            WBTC: "0x54e4622DC504176b3BB432dCCAf504569699a7fF",
+            USDC: "0xc946DAf81b08146B1C7A8Da2A851Ddf2B3EAaf85",
+            USDT: "0x382bB369d343125BfB2117af9c149795C6C65C50",
+            ETH: "0x0000000000000000000000000000000000000000"
+        },
+        tokenDecimals: {
+            WBTC: 18,
+            USDC: 18,
+            USDT: 18
+        },
+        coinGeckoId: "oec-token",
+        registryUrl: null,
+        bitcoinNetwork: BitcoinNetwork.MAINNET
     }
 };
