@@ -20,7 +20,8 @@ export const EVMChains: {
             WBTC: number,
             USDC: number,
             USDT: number,
-        }
+        },
+        maxLogFetch?: number
     }
 } = {
     Q_TESTNET: {
@@ -122,6 +123,7 @@ export const EVMChains: {
         },
         coinGeckoId: "oec-token",
         registryUrl: null,
-        bitcoinNetwork: BitcoinNetwork.MAINNET
+        bitcoinNetwork: BitcoinNetwork.MAINNET,
+        maxLogFetch: 2000
     }
 };

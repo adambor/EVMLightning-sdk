@@ -39,7 +39,8 @@ export function createNodeJSSwapperOptions(chain: "Q" | "Q_TESTNET" | "POLYGON" 
             btcRelayContract: EVMChains[chain].addresses.btcRelayContract
         },
         bitcoinNetwork: EVMChains[chain].bitcoinNetwork,
-        intermediaryUrl: intermediaryUrl
+        intermediaryUrl: intermediaryUrl,
+        maxLogFetch: EVMChains[chain].maxLogFetch
     };
 
     try {
