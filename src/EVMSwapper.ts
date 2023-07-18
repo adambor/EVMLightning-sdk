@@ -54,7 +54,8 @@ export type SwapperOptions = {
         fromBtcLn?: IWrapperStorage,
     },
 
-    maxLogFetch?: number
+    maxLogFetch?: number,
+    useEip1559ForBtcRelay?: boolean
 };
 
 export class EVMSwapper {
@@ -190,7 +191,7 @@ export class EVMSwapper {
         }
 
         const bitcoinRpc = new MempoolBitcoinRpc();
-        const btcRelay = new EVMBtcRelay(provider, bitcoinRpc, options.addresses.btcRelayContract, options.maxLogFetch);
+        const btcRelay = new EVMBtcRelay(provider, bitcoinRpc, options.addresses.btcRelayContract, options.maxLogFetch, options.useEip1559ForBtcRelay);
         const synchronizer = new MempoolBtcRelaySynchronizer(btcRelay, bitcoinRpc);
 
         this.evmSwapContract = new EVMSwapProgram(provider, btcRelay, options.addresses.swapContract, options.maxLogFetch);

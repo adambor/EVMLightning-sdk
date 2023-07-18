@@ -1,6 +1,6 @@
 {
   "name": "evmlightning-sdk",
-  "version": "4.0.1",
+  "version": "4.0.2",
   "description": "SDK for cross-chain swaps between EVM chains and bitcoin",
   "main": "./dist/index.js",
   "types:": "./dist/index.d.ts",
@@ -27,7 +27,7 @@
     "buffer": "^6.0.3",
     "cross-fetch": "^3.1.5",
     "crosslightning-base": "^4.0.6",
-    "crosslightning-evm": "^4.0.6",
+    "crosslightning-evm": "^4.0.9",
     "crosslightning-sdk-base": "^4.0.0",
     "crypto-browserify": "^3.12.0",
     "ethers": "^5.7.2",
