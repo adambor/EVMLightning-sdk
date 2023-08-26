@@ -118,7 +118,7 @@ const _address: string = "bc1qev3mcx2q57znyk7l8uwwzenke67as6gtc7rhn3"; //Destina
 const _amount: BN = new BN(10000); //Amount of satoshis to send (1 BTC = 100 000 000 satoshis)
 
 //Create the swap: swapping _useToken to Bitcoin on-chain, sending _amount of satoshis (smallest unit of bitcoin) to _address
-const swap: SoltoBTCSwap<EVMSwapData> = await swapper.createEVMToBTCSwap(_useToken, _address, _amount);
+const swap: ToBTCSwap<EVMSwapData> = await swapper.createEVMToBTCSwap(_useToken, _address, _amount);
 
 //Get the amount required to pay and fee
 const amountToBePaid: BN = swap.getInAmount(); //Amount to be paid in the ERC-20/ETH token on EVM (including fee), in base units (no decimals)
@@ -155,7 +155,7 @@ const _useToken: string = EVMChains[_useNetwork].tokens.USDC; //Token to swap fr
 const _amount: BN = new BN(10000); //Amount of satoshis to receive (1 BTC = 100 000 000 satoshis)
 
 //Create the swap: swapping _amount of satoshis of Bitcoin on-chain to _useToken
-const swap: BTCtoSolNewSwap<EVMSwapData> = await swapper.createBTCtoEVMSwap(_useToken, _amount);
+const swap: FromBTCSwap<EVMSwapData> = await swapper.createBTCtoEVMSwap(_useToken, _amount);
 
 //Get the amount required to pay, amount to be received and fee
 const amountToBePaidOnBitcoin: BN = swap.getInAmount(); //The amount to be received on bitcoin on-chain address, the amount MUST match! In satoshis (no decimals)
@@ -201,7 +201,7 @@ const _useToken: string = EVMChains[_useNetwork].tokens.USDC; //Token to swap fr
 const _lightningInvoice: string = "lnbc10u1pj2q0g9pp5ejs6m677m39cznpzum7muruvh50ys93ln82p4j9ks2luqm56xxlshp52r2anlhddfa9ex9vpw9gstxujff8a0p8s3pzvua930js0kwfea6scqzzsxqyz5vqsp5073zskc5qfgp7lre0t6s8uexxxey80ax564hsjklfwfjq2ew0ewq9qyyssqvzmgs6f8mvuwgfa9uqxhtza07qem4yfhn9wwlpskccmuwplsqmh8pdy6c42kqdu8p73kky9lsnl40qha5396d8lpgn90y27ltfc5rfqqq59cya"; //Destination lightning network invoice
 
 //Create the swap: swapping _useToken to Bitcoin lightning network, sending to _lightningInvoice (lightning network invoice needs to contain an amount!)
-const swap: SoltoBTCLNSwap<EVMSwapData> = await swapper.createEVMToBTCLNSwap(_useToken, _lightningInvoice);
+const swap: ToBTCLNSwap<EVMSwapData> = await swapper.createEVMToBTCLNSwap(_useToken, _lightningInvoice);
 
 //Get the amount required to pay and fee
 const amountToBePaid: BN = swap.getInAmount(); //Amount to be paid in the ERC-20/ETH token on EVM (including fee), in base units (no decimals)
@@ -238,7 +238,7 @@ const _useToken: string = EVMChains[_useNetwork].tokens.USDC; //Token to swap fr
 const _amount: BN = new BN(10000); //Amount of satoshis to receive (1 BTC = 100 000 000 satoshis)
 
 //Create the swap: swapping _amount of satoshis from Bitcoin lightning network to _useToken
-const swap: BTCLNtoSolSwap<EVMSwapData> = await swapper.createBTCLNtoEVMSwap(_useToken, _amount);
+const swap: FromBTCLNSwap<EVMSwapData> = await swapper.createBTCLNtoEVMSwap(_useToken, _amount);
 
 //Get the bitcoin lightning network invoice (the invoice contains pre-entered amount)
 const receivingLightningInvoice: string = swap.getAddress();
@@ -322,7 +322,7 @@ const _amount: BN = new BN(10000); //Amount of satoshis to send (1 BTC = 100 000
 const _comment: (string | null) = "Hello, Lightning!"; //Optional comment for the payment
 
 //Create the swap: swapping _useToken to Bitcoin lightning network, sending _amount of satoshis to _lnurlOrIdentifier
-const swap: SoltoBTCLNSwap<EVMSwapData> = await swapper.createEVMToBTCLNSwapViaLNURL(_useToken, _lnurlOrIdentifier, _amount, _comment);
+const swap: ToBTCLNSwap<EVMSwapData> = await swapper.createEVMToBTCLNSwapViaLNURL(_useToken, _lnurlOrIdentifier, _amount, _comment);
 
 //Get the amount required to pay and fee
 const amountToBePaid: BN = swap.getInAmount(); //Amount to be paid in the ERC-20/ETH token on EVM (including fee), in base units (no decimals)
@@ -367,7 +367,7 @@ const _lnurl: string = "lnurl1dp68gurn8ghj7ampd3kx2ar0veekzar0wd5xjtnrdakj7tnhv4
 const _amount: BN = new BN(10000); //Amount of satoshis to withdraw (1 BTC = 100 000 000 satoshis)
 
 //Create the swap: swapping _amount of satoshis from Bitcoin lightning network to _useToken
-const swap: BTCLNtoSolSwap<EVMSwapData> = await swapper.createBTCLNtoEVMSwapViaLNURL(_useToken, _lnurl, _amount);
+const swap: FromBTCLNSwap<EVMSwapData> = await swapper.createBTCLNtoEVMSwapViaLNURL(_useToken, _lnurl, _amount);
 
 //Get the amount we will receive on EVM
 const amountToBeReceivedOnEVM: BN = swap.getOutAmount(); //Get the amount we will receive on EVM (excluding fee), in base units (no decimals)
